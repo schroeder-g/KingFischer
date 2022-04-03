@@ -2,7 +2,8 @@
 import re
 import requests
 import json
-
+import io
+import chess.pgn
 
 def get_user_game_archives_from_chess_dot_com(user: str):
 
@@ -14,11 +15,12 @@ def get_user_game_archives_from_chess_dot_com(user: str):
                           .get(f'https://api.chess.com/pub/player/{user}/games/archives', headers=headers)
                           .content.decode('UTF-8'))["archives"]
     most_recent_month = json.loads(requests.get(archives[-1], headers=headers).content.decode('UTF-8'))
-    most_recent_dirty_game = most_recent_month["games"][-3]
+    most_recent_dirty_game = most_recent_month["games"][-1]
 
     cleaned_game = clean_game(most_recent_dirty_game["pgn"], user)
     return [cleaned_game]
 
+    # Collects the entirety of a users game history
     # for url in range(len(archives)):
     #     month_of_games = json.loads(requests
     #                                 .get(archives[url], headers=headers)
@@ -33,28 +35,26 @@ def clean_game(game: str, user):
 
     pgn = re.sub(r'\{.*?\}', '', game)  # remove all objects
     pgn = re.sub(r'\[.*?\]', '', pgn)
-    pgn = re.sub(r"\d{1,2}\.+", "", pgn)
-    pgn.replace("\n", " ")  # This doesn't actually work!
+    pgn = re.sub(r"\d{1,2}\.\.\.", "", pgn)  # remove move numbers
+    # pgn = re.sub(r"\s{2,3}", " ", pgn)  # remove move numbers
+    pgn = re.sub(r"\+", "", pgn)  # remove check notation
+    pgn.replace("\n", " ")
     pgn = pgn.strip()
 
     result = "Win" if (pgn[-3] == 1 and player_color == "White") or \
                       (pgn[-3] == 0 and player_color == "Black") else "Loss"  # Draws currently unsupported
-    pgn = pgn[:-5:]
-    pgn = pgn.split("   ")
+    pgn = pgn[:-3:] # remove game resuts
+    pgn = io.StringIO(pgn)
+    chess_game = chess.pgn.read_game(pgn)
+    moves = []
+    for move in chess_game.mainline_moves():
+        moves.append(move.uci())
 
-    white_moves = pgn[::2]
-    black_moves = pgn[1::2]
-    move_pairs = [list(pair) for pair in zip(white_moves, black_moves)]
-    if len(white_moves) > len(black_moves):
-        move_pairs.append([white_moves[-1]])
-    print(move_pairs)
-    # move_pairs = [pair[0] if not pair[1] else pair[0] + pair[1] for pair in move_pairs]
     opening = game[game.index("\n[ECOUrl") + 10: game.index("\"]\n[UTCDate")]
 
     return {
-        "match": move_pairs,
+        "match": moves,
         "player_color": player_color,
         "opening": opening,
         "result": result
     }
-
