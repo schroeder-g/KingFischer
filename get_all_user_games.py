@@ -47,6 +47,8 @@ def clean_game(game: str, user):
     move_pairs = [list(pair) for pair in zip(white_moves, black_moves)]
     if len(white_moves) > len(black_moves):
         move_pairs.append([white_moves[-1]])
+    print(move_pairs)
+    # move_pairs = [pair[0] if not pair[1] else pair[0] + pair[1] for pair in move_pairs]
     opening = game[game.index("\n[ECOUrl") + 10: game.index("\"]\n[UTCDate")]
 
     return {
@@ -55,3 +57,4 @@ def clean_game(game: str, user):
         "opening": opening,
         "result": result
     }
+

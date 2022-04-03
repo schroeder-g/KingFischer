@@ -10,7 +10,7 @@ class Game:
         self.opening: str = opening
         self.result:  str = result
         self.current_position: Position = state
-        self.engine: Stockfish = Stockfish(path="")
+        self.engine: Stockfish = Stockfish(path=os.environ['STOCKFISH'])
         #self.date: Date = ...
 
     def set_position(self, turn, color):
