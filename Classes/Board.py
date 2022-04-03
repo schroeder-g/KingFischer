@@ -21,6 +21,6 @@ class Square:
 b = Board()
 print(b.state)
 
-for col in range(len(b.state)):
-    for row in range(len(b.state[0])):
-        print(b.state[col][row].row, b.state[col][row].column)
+# for col in range(len(b.state)):
+#     for row in range(len(b.state[0])):
+#         print(b.state[col][row].row, b.state[col][row].column)
